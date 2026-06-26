@@ -58,6 +58,7 @@ function check(){//判定用
     }
     if (tmp === 0){
         console.log("正解！");
+        alert("正解！")
     }else{
         console.log("不正解");
     }
