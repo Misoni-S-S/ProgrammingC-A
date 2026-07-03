@@ -14,6 +14,35 @@ def auto_downscale(board):
             return reshaped[:, 0, :, 0]
     return board
 
+def custom_dumps(obj, indent=5, level=0):
+    """board の行(数値だけのリスト)は1行にまとめ、それ以外は通常通りインデントする"""
+    pad = " " * (indent * level)
+    pad_child = " " * (indent * (level + 1))
+
+    if isinstance(obj, dict):
+        if not obj:
+            return "{}"
+        items = [
+            f'{pad_child}"{k}": {custom_dumps(v, indent, level + 1)}'
+            for k, v in obj.items()
+        ]
+        return "{\n" + ",\n".join(items) + "\n" + pad + "}"
+
+    elif isinstance(obj, list):
+        if not obj:
+            return "[]"
+        # 中身が数値だけのリスト(=board の1行)なら1行にまとめる
+        if all(isinstance(x, (int, float)) for x in obj):
+            return "[" + ", ".join(json.dumps(x) for x in obj) + "]"
+        else:
+            items = [
+                pad_child + custom_dumps(x, indent, level + 1) for x in obj
+            ]
+            return "[\n" + ",\n".join(items) + "\n" + pad + "]"
+
+    else:
+        return json.dumps(obj, ensure_ascii=False)
+
 ANSWER_PATH = Path(__file__).parent / "answer.json"
 answer_DIR = Path(__file__).parent / "answer"
 
@@ -56,6 +85,7 @@ for path in file_path:
 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     board = np.where(gray_img == 255, 1, 0)
+    board = auto_downscale(board)  # ここで2px/セルなら自動的に半分に
 
     img_shape_h, img_shape_w = board.shape[:2]
     print(f"  画像サイズ: {img_shape_h} x {img_shape_w}")
@@ -79,7 +109,7 @@ for path in file_path:
     issue_list.append(answer)
     print(f"  ✓ 追加しました (id={answer['id']}, size={size})")
 
-with open(ANSWER_PATH, "w", encoding="utf-8") as f:  # 書き込み先も ANSWER_PATH に統一
-    json.dump(answer_dict, f, ensure_ascii=False, indent=5)
+with open(ANSWER_PATH, "w", encoding="utf-8") as f:
+    f.write(custom_dumps(answer_dict, indent=5))
 
 print(f"書き込み先: {ANSWER_PATH}")
