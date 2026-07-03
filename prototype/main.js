@@ -1,23 +1,41 @@
 //import answer from "./answer.json" ;
 
-const size = 3; //size*sizeの格子
-const id = 1; //問題番号
+let size = 0; //size*sizeの格子
+let id = 0; //問題番号
 let correctBoard = null;
+let board = [];
 //本体の作成と設定
 const stage = document.getElementById("stage");
-stage.setAttribute("border","1");
-stage.setAttribute("cellspacing","0");
-stage.setAttribute('width', (size * 40).toString());
-stage.setAttribute('height', (size * 40).toString());
+
+// stage.setAttribute("border","1");
+// stage.setAttribute("cellspacing","0");
+// stage.setAttribute('width', (size * 40).toString());
+// stage.setAttribute('height', (size * 40).toString());
 
 //2次元配列の作成
 function creadBoard(size) {
     let newBoard = Array.from({ length: size }, () => Array(size).fill(0));
     return newBoard
 }
-let board = creadBoard(size);
 
+async function startGame() {
+    const sizeInput = document.getElementById("sizeInput").value;
+    const idInput = document.getElementById("idInput").value;
+    size = parseInt(sizeInput,10);
+    id = parseInt(idInput,10);
 
+    board = creadBoard(size);
+    correctBoard = null;
+
+    await getAnswer(size,id);
+
+    if (!correctBoard || correctBoard.length === 0) {
+        alert(`サイズ${size}の問題データ(board)がまだ作られていません！`);
+        stage.innerHTML = '';
+        return ;
+    }
+    render();
+}
 
 async function getAnswer(size,id){//id=>数字, 問題を取りだす。問題はtargetAnswer.boardで読み込めるよ
     try{
@@ -43,7 +61,7 @@ function check(){//判定用
 
     for(let i = 0; i < size; i++){
         for (let j = 0; j < size; j++){
-            if(board[i][j] == correctBoard[i][j]){
+            if(board[i][j] === correctBoard[i][j]){
             }else{
                 if (board[i][j]!==2){
                     tmp = 1;
@@ -193,7 +211,3 @@ stage.addEventListener("contextmenu",function(event){
     console.log(`右クリックされた座標: 行=${row}, 列=${col}`);//確認用
     render();
 })
-
-
-getAnswer(size,id)
-//outanswer()

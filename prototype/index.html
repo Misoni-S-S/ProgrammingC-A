@@ -6,9 +6,26 @@
     </head>
     <body>
 
-        <h1>ピクロス（イラストロジック）</h1>
+        <h1>ピクロス</h1>
 
-         <table id="stage"></table>  
+        <div sytle="margin-bottom: 20px;">
+            <label for = "sizeInput">盤面の大きさ：</label>
+            <select id="sizeInput">
+                <option value="3">3x3</option>
+                <option value="5">5x5</option>
+                <option value="10">10x10</option>
+            </select>
+            <label for = "idInput">　問題番号：</label>
+            <select id = "idInput">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
+            <p></p>
+            <button onclick="startGame()">スタート！</buttom>
+        </div>
+
+        <table id="stage"></table>  
 
         <script src="main.js"></script>
 
