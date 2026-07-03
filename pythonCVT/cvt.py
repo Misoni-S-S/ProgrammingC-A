@@ -4,53 +4,82 @@ from glob import glob
 import json
 from pathlib import Path
 
-file_path = glob("ansor/*")
 
-with open("answer.json", encoding="utf-8") as f:
-    answer_dict = json.load(f)
+def auto_downscale(board):
+    """2x2ブロックが全て同一値なら、半分のサイズに縮小する"""
+    h, w = board.shape
+    if h % 2 == 0 and w % 2 == 0:
+        reshaped = board.reshape(h // 2, 2, w // 2, 2)
+        if np.all(reshaped == reshaped[:, :1, :, :1]):
+            return reshaped[:, 0, :, 0]
+    return board
 
-# img_shape(= h//2) -> answer_dict のインデックス
-SHAPE_TO_INDEX = {3: 0, 5: 1, 10: 2}
+ANSWER_PATH = Path(__file__).parent / "answer.json"
+answer_DIR = Path(__file__).parent / "answer"
+
+file_path = glob(str(answer_DIR / "*"))
+print(f"answer フォルダ: {answer_DIR}")
+print(f"見つかったファイル数: {len(file_path)}")
+print(file_path)
+
+if ANSWER_PATH.exists() and ANSWER_PATH.stat().st_size > 0:
+    with open(ANSWER_PATH, encoding="utf-8") as f:
+        answer_dict = json.load(f)
+else:
+    answer_dict = [
+        {"size": 3, "issue": []},
+        {"size": 5, "issue": []},
+        {"size": 10, "issue": []},
+    ]
 
 
 def next_id(issue_list):
-    """issue リストの最後の要素の id + 1 を返す。空 or 取得失敗なら 1。"""
-    try:
-        return issue_list[-1]["id"] + 1
-    except (IndexError, KeyError):
-        return 1
-    
+    ids = [item["id"] for item in issue_list if isinstance(item, dict) and "id" in item]
+    return max(ids) + 1 if ids else 1
+
+
+def find_target(answer_dict, size):
+    for entry in answer_dict:
+        if entry.get("size") == size:
+            return entry["issue"]
+    return None
+
 
 for path in file_path:
-    answer = {"title": Path(path).stem}
-    print(answer["title"])
+    title = Path(path).stem
+    print(f"--- {title} ---")
 
     img = cv2.imread(path)
     if img is None:
-        print(f"画像を読み込めませんでした: {path}")
+        print(f"  ✗ 画像を読み込めませんでした: {path}")
         continue
 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     board = np.where(gray_img == 255, 1, 0)
 
     img_shape_h, img_shape_w = board.shape[:2]
+    print(f"  画像サイズ: {img_shape_h} x {img_shape_w}")
+
     if img_shape_h != img_shape_w:
-        # 正方形じゃない画像はスキップ
+        print("  ✗ 正方形ではないためスキップ")
         continue
 
-    img_shape = img_shape_h // 2
-    if img_shape not in SHAPE_TO_INDEX:
-        # 想定外サイズもスキップ
+    size = img_shape_h
+
+    issue_list = find_target(answer_dict, size)
+    if issue_list is None:
+        print(f"  ✗ size={size} に対応する枠が answer.json にありません")
         continue
 
-    answer["board"] = board.tolist()
-
-    target_index = SHAPE_TO_INDEX[img_shape]
-    issue_list = answer_dict[target_index]["issue"]
-    answer["id"] = next_id(issue_list)
+    answer = {
+        "id": next_id(issue_list),
+        "title": title,
+        "board": board.tolist(),
+    }
     issue_list.append(answer)
+    print(f"  ✓ 追加しました (id={answer['id']}, size={size})")
 
-# print(answer_dict)
+with open(ANSWER_PATH, "w", encoding="utf-8") as f:  # 書き込み先も ANSWER_PATH に統一
+    json.dump(answer_dict, f, ensure_ascii=False, indent=5)
 
-with open("answer.json", "w", encoding="utf-8") as f:
-    json.dump(answer_dict, f, indent=5)
+print(f"書き込み先: {ANSWER_PATH}")
