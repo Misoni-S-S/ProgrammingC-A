@@ -42,6 +42,20 @@ def custom_dumps(obj, indent=5, level=0):
 
     else:
         return json.dumps(obj, ensure_ascii=False)
+    
+def find_target(answer_dict, size):
+    for entry in answer_dict:
+        if entry.get("size") == size:
+            return entry["issue"]
+    return None
+
+def board_exists(issue_list, board):
+    """issue_list の中に同じ board を持つ要素が既にあるかどうかを判定する"""
+    for item in issue_list:
+        if isinstance(item, dict) and item.get("board") == board:
+            return True
+    return False
+        
 
 ANSWER_PATH = Path(__file__).parent / "answer.json"
 answer_DIR = Path(__file__).parent / "answer"
@@ -101,15 +115,16 @@ for path in file_path:
         print(f"  ✗ size={size} に対応する枠が answer.json にありません")
         continue
 
+    board_list = board.tolist()
+
+    if board_exists(issue_list, board_list):
+        print(f"  ✗ 同じ答え(board)が既に登録済みのためスキップ: {title}")
+        continue
+
     answer = {
         "id": next_id(issue_list),
         "title": title,
-        "board": board.tolist(),
+        "board": board_list,
     }
     issue_list.append(answer)
     print(f"  ✓ 追加しました (id={answer['id']}, size={size})")
-
-with open(ANSWER_PATH, "w", encoding="utf-8") as f:
-    f.write(custom_dumps(answer_dict, indent=5))
-
-print(f"書き込み先: {ANSWER_PATH}")
