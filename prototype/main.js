@@ -4,6 +4,10 @@ let size = 0; //size*sizeの格子
 let id = 0; //問題番号
 let correctBoard = null;
 let board = [];
+
+let tateHint = [];
+let yokoHint = [];
+
 //本体の作成と設定
 const stage = document.getElementById("stage");
 
@@ -115,7 +119,14 @@ function render(){//再描画 ＆ check()も含む
     }
     check()
 }
-
+function hints(i, axis = 0){
+    //correctBoard使うよ
+    if ( axis === 0 ){
+        //yokoHintを書く
+    }else{
+        //tateHintを書く
+    }
+}
 
 
 //デバッグ用
