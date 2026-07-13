@@ -5,8 +5,6 @@ let id = 0; //問題番号
 let correctBoard = null;
 let board = [];
 
-let tateHint = [];
-let yokoHint = [];
 
 //本体の作成と設定
 const stage = document.getElementById("stage");
@@ -119,13 +117,55 @@ function render(){//再描画 ＆ check()も含む
     }
     check()
 }
-function hints(i, axis = 0){
+function hints(number, axis = 0){
     //correctBoard使うよ
+    let tmp1=-1;
+    let tmp2=-1;
+    let count = 0;
+    let hintsList = [];
     if ( axis === 0 ){
         //yokoHintを書く
-    }else{
+        for (let i=0;i<size;++i){   
+            tmp2 = correctBoard[number][i]; //number行　i列の答えを出してヒントを決定する.
+            if(tmp2 === tmp1){
+                count += 1;
+            }else{
+                if (tmp2===0){
+                    hintsList.push(count);
+                    count = 0;
+                }else{
+                    hintsList.push(" "); //空白を入れる
+                    count = 1;
+                }
+                tmp1 = tmp2
+            }
+        } 
+        if (count !== 0){
+            hintsList.push(count);
+        }
+
+    }else if( axis === 1 ){
         //tateHintを書く
+        for (let i=0; i<size; ++i){
+            tmp2 = correctBoard[i][number];
+            if(tmp2 === tmp1){
+                count+=1;
+            }else{
+                if(tmp2===0){
+                    hintsList.push(count);
+                    count = 0;
+                }else{
+                    hintsList.push(" ");
+                    count = 1;
+                }
+                tmp1 = tmp2;
+            }
+        }
+        if (count !== 0){
+            hintsList.push(count);
+        }
     }
+    return hintsList;
 }
 
 
