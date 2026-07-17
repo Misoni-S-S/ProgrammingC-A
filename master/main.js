@@ -120,7 +120,14 @@ function render(){//再描画 ＆ check()も含む
                 const vList = hints(boardCol, 1);
                 const hintIndex = vList.length - hintSize + i;
                 if (hintIndex >= 0 && hintIndex < vList.length) {
-                    td.innerHTML = vList[hintIndex];
+                    //td.innerHTML = vList[hintIndex];
+                    let hintData = vList[hintIndex];
+                    td.innerHTML = hintData.num;
+                    // もし確定(done)が true なら灰色＆太字にする！
+                    if (hintData.done === true) {
+                        td.style.color = "#b0b0b0"
+                        td.style.fontWeight = "bold"; 
+                    }
                 }
             }else if(i >= hintSize && j < hintSize) {
 
@@ -131,7 +138,15 @@ function render(){//再描画 ＆ check()も含む
                 const hList = hints(boardRow, 0);
                 const hintIndex = hList.length - hintSize + j;
                 if (hintIndex >= 0 && hintIndex < hList.length) {
-                    td.innerHTML = hList[hintIndex];
+                    //td.innerHTML = hList[hintIndex];
+                    let hintData = hList[hintIndex];
+                    td.innerHTML = hintData.num; // 数字を表示
+                    
+                    // もし確定(done)が true なら灰色＆太字にする！
+                    if (hintData.done === true) {
+                        td.style.color = "#b0b0b0"
+                        td.style.fontWeight = "bold";
+                    }
                 }
             }else {
                 const boardRow = i - hintSize;
@@ -155,93 +170,63 @@ function render(){//再描画 ＆ check()も含む
     check()
 }
 
-// function hints(number, axis = 0){
-//     //correctBoard使うよ
-//     let tmp1=-1;
-//     let tmp2=-1;
-//     let count = 0;
-//     let hintsList = [];
-//     if ( axis === 0 ){
-//         //yokoHintを書く
-//         for (let i=0;i<size;++i){   
-//             tmp2 = correctBoard[number][i]; //number行　i列の答えを出してヒントを決定する.
-//             if(tmp2 === tmp1){
-//                 count += 1;
-//             }else{
-//                 if (tmp2===0){
-//                     if(count === 0){
-//                         continue;
-//                     }
-//                     hintsList.push(count);
-//                     count = 0;
-//                 }else{
-//                     //hintsList.push(" "); //空白を入れる
-//                     count = 1;
-//                 }
-//                 tmp1 = tmp2
-//             }
-//         } 
-//         if (count !== 0){
-//             hintsList.push(count);
-//         }
-
-//     }else if( axis === 1 ){
-//         //tateHintを書く
-//         for (let i=0; i<size; ++i){
-//             tmp2 = correctBoard[i][number];
-//             if(tmp2 === tmp1){
-//                 count+=1;
-//             }else{
-//                 if(tmp2===0){
-//                     if(count === 0){
-//                         continue;
-//                     }
-//                     hintsList.push(count);
-//                     count = 0;
-//                 }else{
-//                     hintsList.push(" ");
-//                     count = 1;
-//                 }
-//                 tmp1 = tmp2;
-//             }
-//         }
-//         if (count !== 0){
-//             hintsList.push(count);
-//         }
-//     }
-//     return hintsList;
-// }
 
 function hints(number, axis = 0) {
     let hintsList = [];
     let count = 0;
+    let blockIndices = []; // 黒マスが連続している「座標」を記憶するリスト
 
     for (let i = 0; i < size; i++) {
-        // axis=0なら横(number行 i列)、axis=1なら縦(i行 number列)
         let cellData = (axis === 0) ? correctBoard[number][i] : correctBoard[i][number];
 
         if (cellData === 1) {
-            // 黒マスの場合はカウントを1増やす
             count++;
+            blockIndices.push(i); // 何番目のマスが黒かを記憶
         } else {
-            // 白マス(0)が来て、かつカウントが1以上溜まっていればリストに追加
             if (count > 0) {
-                hintsList.push(count);
-                count = 0; // カウントをリセット
+                // ブロックが確定したかチェックする
+                let isDone = checkBlock(blockIndices, number, axis);
+                // 数字(num)と確定状態(done)をセットにして保存
+                hintsList.push({ num: count, done: isDone });
+                count = 0;
+                blockIndices = [];
             }
         }
     }
-// 行や列の最後まで黒マスだった場合、最後のカウントを追加
+    
+    // 行や列の最後が黒マスで終わっていた場合の処理
     if (count > 0) {
-        hintsList.push(count);
+        let isDone = checkBlock(blockIndices, number, axis);
+        hintsList.push({ num: count, done: isDone });
     }
 
-    // 1つも黒マスがなかった場合は、ヒントを [0] にする
     if (hintsList.length === 0) {
-        hintsList.push(0);
+        hintsList.push({ num: 0, done: false });
     }
 
     return hintsList;
+}
+function checkBlock(indices, number, axis) {
+    // 1. 答えの黒マスがあるべき場所が、すべて塗られているか？
+    for (let idx of indices) {
+        let userCell = (axis === 0) ? board[number][idx] : board[idx][number];
+        if (userCell !== 1) return false; // 1つでも塗られていなければ未確定
+    }
+
+    // 2. 塗られすぎを防止（前後のマスまで余分に黒く塗られていないかチェック）
+    let beforeIdx = indices[0] - 1;
+    let afterIdx = indices[indices.length - 1] + 1;
+
+    if (beforeIdx >= 0) {
+        let userCellBefore = (axis === 0) ? board[number][beforeIdx] : board[beforeIdx][number];
+        if (userCellBefore === 1) return false;
+    }
+    if (afterIdx < size) {
+        let userCellAfter = (axis === 0) ? board[number][afterIdx] : board[afterIdx][number];
+        if (userCellAfter === 1) return false;
+    }
+
+    return true; // 条件をすべてクリアしたら確定！
 }
 
 
