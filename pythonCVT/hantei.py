@@ -131,36 +131,36 @@ def partial_column_valid(col_values, clue):
     return True
 
 
-# ---------- 解の個数を数える(バックトラック) ----------
+# ---------- 解を実際に探す(バックトラック) ----------
 
-def count_solutions(row_clues, col_clues, size, limit=2):
+def find_solutions(row_clues, col_clues, size, limit=2):
     """
-    row_clues, col_clues から解が何通りあるかを数える。
-    limit に達したら早期終了する(全探索を避けて高速化するため)。
+    row_clues, col_clues から実際に解ける盤面パターンを探し、
+    見つかった解(0/1の2次元リスト)のリストを返す。
+    limit件見つかった時点で早期終了する(全探索を避けて高速化するため)。
     """
     row_combos = [generate_line_combos(clue, size) for clue in row_clues]
 
-    # どこかの行に候補が1つも無い(=そもそも矛盾したclue)場合は解0
+    # どこかの行に候補が1つも無い(=そもそも矛盾したclue)場合は解なし
     if any(len(combos) == 0 for combos in row_combos):
-        return 0
+        return []
 
     grid = [None] * size
-    solution_count = 0
+    solutions = []
 
     def is_column_complete(col_index):
         col_values = [grid[r][col_index] for r in range(size)]
         return generate_runs(col_values) == col_clues[col_index]
 
     def backtrack(row_index):
-        nonlocal solution_count
-        if solution_count >= limit:
+        if len(solutions) >= limit:
             return
 
         if row_index == size:
             for c in range(size):
                 if not is_column_complete(c):
                     return
-            solution_count += 1
+            solutions.append([row[:] for row in grid])  # 見つかった解を丸ごとコピーして保存
             return
 
         for combo in row_combos[row_index]:
@@ -175,11 +175,16 @@ def count_solutions(row_clues, col_clues, size, limit=2):
 
             if valid:
                 backtrack(row_index + 1)
-                if solution_count >= limit:
+                if len(solutions) >= limit:
                     return
 
     backtrack(0)
-    return solution_count
+    return solutions
+
+
+def count_solutions(row_clues, col_clues, size, limit=2):
+    """row_clues, col_clues から解が何通りあるかを数える(find_solutionsのラッパー)"""
+    return len(find_solutions(row_clues, col_clues, size, limit))
 
 
 # ---------- 1問を判定する ----------
@@ -192,12 +197,16 @@ class ValidationResult:
     reason: str = None
     row_clues: list = field(default_factory=list)
     col_clues: list = field(default_factory=list)
+    alternate_solutions: list = field(default_factory=list)  # 元のboardと異なる別解(見つかった分だけ)
 
 
-def validate_puzzle(board):
+def validate_puzzle(board, solution_search_limit=2):
     """
     board(正解データ)を渡すと、そのboardから作ったclueで解いたときに
     解が一意に定まるかどうかを判定して返す。
+
+    solution_search_limit: 何個まで解を探すか。デフォルト2で
+    「唯一かどうか」の判定には十分だが、別解を複数見たい場合は増やせる。
     """
     size = len(board)
 
@@ -209,7 +218,11 @@ def validate_puzzle(board):
         )
 
     row_clues, col_clues = clues_from_board(board)
-    solution_count = count_solutions(row_clues, col_clues, size, limit=2)
+    solutions = find_solutions(row_clues, col_clues, size, limit=solution_search_limit)
+    solution_count = len(solutions)
+
+    # 元のboardと異なるものだけを「別解」として抜き出す
+    alternate_solutions = [s for s in solutions if s != board]
 
     # 全マス0(何もヒントが無い)問題は退屈だが解自体は一意なので別フラグで警告
     is_trivial = all(len(r) == 0 for r in row_clues) or all(len(c) == 0 for c in col_clues)
@@ -224,12 +237,39 @@ def validate_puzzle(board):
 
     return ValidationResult(
         valid=(solution_count == 1 and not is_trivial),
-        solution_count=("2以上(別解あり)" if solution_count >= 2 else solution_count),
+        solution_count=(f"{solution_search_limit}以上(別解あり)" if solution_count >= solution_search_limit else solution_count),
         is_trivial=is_trivial,
         reason=reason,
         row_clues=row_clues,
         col_clues=col_clues,
+        alternate_solutions=alternate_solutions,
     )
+
+
+# ---------- 盤面の見やすい表示 ----------
+
+def format_board(board):
+    """0/1の盤面を ■(黒マス) / ・(空白) の文字列にして返す"""
+    return "\n".join("".join("■" if v else "・" for v in row) for row in board)
+
+
+def format_diff(original, alternate):
+    """
+    original(元のboard)と alternate(別解)を比較し、
+    一致箇所は ■/・、異なる箇所は目立つ記号で表示する文字列を返す。
+      △ : 元は空白だったが別解では黒マス
+      ▽ : 元は黒マスだったが別解では空白
+    """
+    lines = []
+    for row_o, row_a in zip(original, alternate):
+        line = ""
+        for o, a in zip(row_o, row_a):
+            if o == a:
+                line += "■" if o else "・"
+            else:
+                line += "△" if a else "▽"
+        lines.append(line)
+    return "\n".join(lines)
 
 
 # ---------- answer.json 全体をチェックするランナー ----------
