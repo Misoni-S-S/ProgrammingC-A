@@ -118,6 +118,15 @@ function render(){//再描画 ＆ check()も含む
                 // ※ここに縦ヒントを配置する処理を書く
                 const boardCol = j - hintSize;
                 const vList = hints(boardCol, 1);
+                // ★ 動的アシストの判定を追加
+                const rawHints = getRawHints(boardCol, 1);
+                const currentLine = getCurrentLine(boardCol, 1);
+                const isAssist = checkAssist(rawHints, currentLine, size);
+                
+                // アシスト対象なら文字色を薄いグレーにする
+                if (isAssist) {
+                    td.style.backgroundColor = "#ccffff";
+                }
                 const hintIndex = vList.length - hintSize + i;
                 if (hintIndex >= 0 && hintIndex < vList.length) {
                     //td.innerHTML = vList[hintIndex];
@@ -136,6 +145,14 @@ function render(){//再描画 ＆ check()も含む
                 // ※ここに横ヒントを配置する処理を書く
                 const boardRow = i - hintSize; 
                 const hList = hints(boardRow, 0);
+                const rawHints = getRawHints(boardRow, 0);
+                const currentLine = getCurrentLine(boardRow, 0);
+                const isAssist = checkAssist(rawHints, currentLine, size);
+                
+                // アシスト対象なら文字色を薄いグレーにする
+                if (isAssist) {
+                    td.style.backgroundColor = "#ccffff";
+                }
                 const hintIndex = hList.length - hintSize + j;
                 if (hintIndex >= 0 && hintIndex < hList.length) {
                     //td.innerHTML = hList[hintIndex];
@@ -229,7 +246,86 @@ function checkBlock(indices, number, axis) {
     return true; // 条件をすべてクリアしたら確定！
 }
 
+// ------------------------------------------
+// アシスト機能（動的ヒント計算）
+// ------------------------------------------
 
+// 正解の盤面から純粋なヒントの配列（例: [1, 2]）を作る関数
+function getRawHints(number, axis) {
+    let list = [];
+    let count = 0;
+    for (let i = 0; i < size; i++) {
+        let cell = (axis === 0) ? correctBoard[number][i] : correctBoard[i][number];
+        if (cell === 1) count++;
+        else if (count > 0) { list.push(count); count = 0; }
+    }
+    if (count > 0) list.push(count);
+    return list;
+}
+
+// 現在のプレイヤーの入力行（列）を取得する関数
+function getCurrentLine(number, axis) {
+    let line = [];
+    for (let i = 0; i < size; i++) {
+        line.push((axis === 0) ? board[number][i] : board[i][number]);
+    }
+    return line;
+}
+
+// 確定できるマスが残っているか判定するメインエンジン
+function checkAssist(hintsList, currentLine, size) {
+    if (hintsList.length === 0) hintsList = [0];
+    let validLines = [];
+
+    // 考えられるすべての配置パターンを洗い出す
+    function findPlacements(hintIndex, currentPos, currentPlacement) {
+        if (hintIndex === hintsList.length || hintsList[0] === 0) {
+            let finalLine = [...currentPlacement];
+            while (finalLine.length < size) finalLine.push(2);
+
+            // プレイヤーの現在の入力(〇=1, ×=2)と矛盾していないかチェック
+            let isValid = true;
+            for (let i = 0; i < size; i++) {
+                if (currentLine[i] === 1 && finalLine[i] !== 1) isValid = false;
+                if (currentLine[i] === 2 && finalLine[i] !== 2) isValid = false;
+            }
+            if (isValid) validLines.push(finalLine);
+            return;
+        }
+
+        let block = hintsList[hintIndex];
+        let remaining = hintsList.slice(hintIndex + 1);
+        let minSpace = remaining.reduce((a, b) => a + b + 1, 0);
+
+        for (let start = currentPos; start <= size - minSpace - block; start++) {
+            let next = [...currentPlacement];
+            while (next.length < start) next.push(2);
+            for (let i = 0; i < block; i++) next.push(1);
+            if (hintIndex < hintsList.length - 1) next.push(2);
+            findPlacements(hintIndex + 1, next.length, next);
+        }
+    }
+
+    findPlacements(0, 0, []);
+
+    // 矛盾していてパターンがない場合はアシストしない
+    if (validLines.length === 0) return false;
+
+    // まだ塗られていない「0(空白)」のマスのうち、すべてのパターンで同じ結果になるマスを探す
+    for (let i = 0; i < size; i++) {
+        if (currentLine[i] === 0) {
+            let alwaysOne = true;  // 絶対に黒になる
+            let alwaysTwo = true;  // 絶対に×になる
+            for (let line of validLines) {
+                if (line[i] !== 1) alwaysOne = false;
+                if (line[i] !== 2) alwaysTwo = false;
+            }
+            // どちらかが確定しているマスがあれば「アシスト対象(true)」として返す
+            if (alwaysOne || alwaysTwo) return true;
+        }
+    }
+    return false; // すでに確定マスを全部塗っている場合はアシストしない
+}
 //左クリック(〇)された時のイベント
 stage.addEventListener("click",function(event){
     const clickedElement = event.target;//本当の要素を特定
