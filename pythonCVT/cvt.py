@@ -98,7 +98,7 @@ for path in file_path:
         continue
 
     gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    board = np.where(gray_img == 255, 1, 0)
+    board = np.where(gray_img >= 200, 1, 0)
     board = auto_downscale(board)  # ここで2px/セルなら自動的に半分に
 
     img_shape_h, img_shape_w = board.shape[:2]
@@ -127,4 +127,6 @@ for path in file_path:
         "board": board_list,
     }
     issue_list.append(answer)
+    with open(ANSWER_PATH, "w", encoding="utf-8") as f:
+        f.write(custom_dumps(answer_dict, indent=5))
     print(f"  ✓ 追加しました (id={answer['id']}, size={size})")
