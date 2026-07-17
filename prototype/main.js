@@ -26,7 +26,9 @@ async function startGame() {
     size = parseInt(sizeInput,10);
     id = parseInt(idInput,10);
 
-    board = creadBoard(size);
+    boardsize = size + Math.ceil(size/2); //hint + issue
+
+    board = creadBoard(boardsize);
     correctBoard = null;
 
     await getAnswer(size,id);
@@ -63,7 +65,7 @@ function check(){//判定用
 
     for(let i = 0; i < size; i++){
         for (let j = 0; j < size; j++){
-            if(board[i][j] === correctBoard[i][j]){
+            if(board[i][j] === correctBoard[i][j]){ //boardを別の変数に変える -> 大きなstageから解く部分だけを参照した変数
             }else{
                 if (board[i][j]!==2){
                     tmp = 1;
@@ -93,6 +95,7 @@ function render(){//再描画 ＆ check()も含む
 
     for (let i = 0; i<size; i++){
         const tr = document.createElement("tr");
+
         for (let j = 0; j<size; j++){
 
             const cellData = board[i][j];
@@ -113,7 +116,7 @@ function render(){//再描画 ＆ check()も含む
     
             tr.appendChild(td);
         }
-    stage.appendChild(tr);
+        stage.appendChild(tr);
     }
     check()
 }
