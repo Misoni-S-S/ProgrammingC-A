@@ -1,4 +1,4 @@
-//import answer from "./answer.json" ;
+//import answer from "/pythonCVT/answer.json" ;
 
 let size = 0; //size*sizeの格子
 let id = 0; //問題番号
@@ -26,9 +26,9 @@ async function startGame() {
     size = parseInt(sizeInput,10);
     id = parseInt(idInput,10);
 
-    boardsize = size + Math.ceil(size/2); //hint + issue
+    //boardsize = size + Math.ceil(size/2); //hint + issue
 
-    board = creadBoard(boardsize);
+    board = creadBoard(size);
     correctBoard = null;
 
     await getAnswer(size,id);
