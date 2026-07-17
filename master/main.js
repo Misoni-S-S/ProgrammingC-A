@@ -8,7 +8,7 @@ let hedge = Math.ceil(size/2);
 
 //本体の作成と設定
 const stage = document.getElementById("stage");
-
+ let checker = -1;
 
 
 //関数
@@ -83,7 +83,7 @@ function check(){//判定用
     }
     if (tmp === 0){
         console.log("正解！");
-        alert("正解！")
+
     }else{
         console.log("不正解");
     }
@@ -98,6 +98,8 @@ function render(){//再描画 ＆ check()も含む
     stage.setAttribute('height', (boardsize * 40).toString());
     const hintSize = Math.ceil(size / 2);
     const totalSize = boardsize;
+
+
     for (let i = 0; i<boardsize; i++){
         const tr = document.createElement("tr");
 
