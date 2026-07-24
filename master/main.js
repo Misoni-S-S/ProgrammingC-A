@@ -5,6 +5,7 @@ let correctBoard = null;
 let board = [];
 let boardsize = 0;
 let hedge = Math.ceil(size/2);
+let answer_index = -1;
 
 //本体の作成と設定
 const stage = document.getElementById("stage");
@@ -83,6 +84,7 @@ function check(){//判定用
     }
     if (tmp === 0){
         console.log("正解！");
+        answer_index = 1;
 
     }else{
         console.log("不正解");
@@ -187,6 +189,7 @@ function render(){//再描画 ＆ check()も含む
         stage.appendChild(tr);
     }
     check()
+    //ここで動作
 }
 
 
