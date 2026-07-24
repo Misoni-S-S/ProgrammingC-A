@@ -180,6 +180,47 @@
                     console.error(".setting_item が見つかりません");
                 }
             }
+
+    let timerId = null;
+
+    //---------------------------------
+    // flip & time
+    //---------------------------------
+    function flip_and_stop(e) {
+        flip_setting_item(e);
+        clearInterval(timerId)
+
+        timer.textContent = "00:00";
+
+        console.log("reset timer");
+    }
+
+    function flip_and_time(e) {
+        flip_setting_item(e);
+
+        const timer = document.getElementById("timer");
+
+        timer.style.visibility = "visible";
+
+        let elapsedTime = 0;
+
+        // 1秒ごとに処理
+        timerId = setInterval(() => {
+            elapsedTime++;
+
+            let minutes = Math.floor(elapsedTime / 60);
+            let seconds = elapsedTime % 60;
+
+            let m = String(minutes).padStart(2, '0');
+            let s = String(seconds).padStart(2, '0');
+
+            console.log("time : " + m + ":" + s);
+
+            timer.textContent = m + ":" + s;
+        }, 1000)
+
+    }
+
         </script>
 
         <div
@@ -230,18 +271,20 @@
                     <option value="2">2</option>
                     <option value="3">3</option>
                 </select>
-                <p></p>
                 <button
-                    onclick="flip_setting_item(event); startGame();"
+                    onclick="flip_and_time(event); startGame();"
                 >
                     スタート！
                 </button>
             </div>
 
             <div class = "setting_back_item">
+                <p id="timer" style="position: fixed; top: 10px; left: 10px; visibility: hidden;">
+                    00:00
+                </p>
                 <table id="stage"></table>
                 <button
-                    onclick="flip_setting_item(event);"
+                    onclick="flip_and_stop(event);"
                     style="margin-top: 20px;"
                 >
                     問題選択に戻る
