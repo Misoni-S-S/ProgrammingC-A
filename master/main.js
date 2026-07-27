@@ -6,18 +6,22 @@ let board = [];
 let boardsize = 0;
 let hedge = Math.ceil(size/2);
 let answer_index = -1;
-let answered_issue_index_list = [[0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0],
-                                [0,0,0,0,0,0,0,0,0,0]];
+// let answered_issue_index_list = [[0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0],
+//                                 [0,0,0,0,0,0,0,0,0,0]];
 
 let answer_title = null;
+// 完成画面で使う固定サイズ(全ての盤面サイズで共通)
+const COMPLETE_IMAGE_SIZE = 250; // 画像の表示サイズ(px)
+const COMPLETE_BOX_SIZE = 320;   // 画像+タイトルを囲む枠のサイズ(px)
+
 //本体の作成と設定
 const stage = document.getElementById("stage");
  let checker = -1;
@@ -101,18 +105,24 @@ function check(){//判定用
     if (tmp === 0){
         console.log("正解！");
         answer_index = 1;
-        const rowIndex = getSizeCategoryIndex(selectedSize);
-        answered_issue_index_list[rowIndex][id-1] = 1;
-        console.log(answer_title+"の選択肢が解放されました");
+
 
     }else{
         console.log("不正解");
+        answer_index = -1;
     }
 }
 
 function render(){//再描画 ＆ check()も含む
     const stage = document.getElementById("stage");
     stage.innerHTML = ''; //重要!!!! 再表示する際に前のやつも表示しないようにする
+    
+    check();
+    
+    if (answer_index === 1){
+        renderComplete();
+        return;
+    }
     stage.setAttribute("border","1");
     stage.setAttribute("cellspacing","0");
     stage.setAttribute('width', (boardsize * 40).toString());
@@ -207,10 +217,49 @@ function render(){//再描画 ＆ check()も含む
         }
         stage.appendChild(tr);
     }
-    check()
+    //check()
     //ここで動作
 }
 
+function renderComplete(){//正解画像表示
+    const stage = document.getElementById("stage");
+    stage.innerHTML = '';
+    stage.setAttribute("border","1");
+    stage.setAttribute("cellspacing","0");
+    // stage.setAttribute('width', (boardsize * 40).toString());
+    // stage.setAttribute('height', (boardsize * 40).toString());
+    stage.setAttribute('width', COMPLETE_BOX_SIZE.toString());
+    stage.setAttribute('height', COMPLETE_BOX_SIZE.toString());
+
+    // タイマーを止めて、クリアタイムを固定表示する
+    clearInterval(timerId);
+
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.setAttribute("colspan", boardsize.toString());
+    td.setAttribute("rowspan", boardsize.toString());
+    td.style.textAlign = "center";
+    td.style.verticalAlign = "middle";
+    td.style.padding = "10px";
+    td.style.boxSizing = "border-box";
+    td.style.width = COMPLETE_BOX_SIZE + "px";
+    td.style.height = COMPLETE_BOX_SIZE + "px";
+
+    //srcから正解画像を参照
+    td.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:${COMPLETE_BOX_SIZE}px; height:${COMPLETE_BOX_SIZE}px;">
+            <img src="./image/ColorAnswer/size3/卓球ラケット.png"
+                 alt="${answer_title}"
+                 style="width:${COMPLETE_BOX_SIZE}px; height:${COMPLETE_BOX_SIZE}px;object-fit:contain;">
+            <p style="font-weight:bold; font-size:18px; margin-top:12px;">
+                ${answer_title}
+            </p>
+        </div>
+    `;
+
+    tr.appendChild(td);
+    stage.appendChild(tr);
+}
 
 function hints(number, axis = 0) {
     let hintsList = [];
