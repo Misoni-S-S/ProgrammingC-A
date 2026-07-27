@@ -127,6 +127,17 @@
                 transform: rotateY(360deg) translateZ(1px);
                 visibility: visible
             }
+            .rule_box {
+                background-color: #ffffff; /* ★半透明(rgba)ではなく完全な白に変更 */
+                color: #2c3e50;
+                border-radius: 12px;
+                padding: 16px 24px;
+                margin: 16px auto;
+                max-width: min(85vw, 420px);
+                text-align: left;
+                border: 2px solid #2c3e50; /* ★枠線を追加してさらにくっきりさせる */
+                box-shadow: 0 3px 0 #2c3e50;
+            }
 
             /* .setting_back_item > * {
                 display: inline-block;
@@ -236,6 +247,17 @@
                 <h1 class="start_title">
                     ピクロス
                 </h1>
+                <div class="rule_box">
+                    <h2 class="rule_heading">あそびかた</h2>
+                        <ul class="rule_list">
+                            <li>盤面の左と上にある数字がヒント</li>
+                            <li>数字はその行・列で塗るマスの数を表している</li>
+                            <li>左クリックでマスを塗る(〇)</li>
+                            <li>右クリックで塗らないマスに印(×)をつける</li>
+                            <li>ヒントマスが水色の時確定しているマスがある</li>
+                            <li>全部のマスが正解と一致したらクリア</li>
+                        </ul>
+                </div>
                 <button
                     onclick="deleteStartScreen()"
                     class="start_button"
