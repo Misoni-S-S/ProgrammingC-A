@@ -248,7 +248,7 @@ function renderComplete(){//正解画像表示
     //srcから正解画像を参照
     td.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:${COMPLETE_BOX_SIZE}px; height:${COMPLETE_BOX_SIZE}px;">
-            <img src="./image/ColorAnswer/size3/卓球ラケット.png"
+            <img src="./image/ColorAnswer_500/${size}-${id}.png"
                  alt="${answer_title}"
                  style="width:${COMPLETE_BOX_SIZE}px; height:${COMPLETE_BOX_SIZE}px;object-fit:contain;">
             <p style="font-weight:bold; font-size:18px; margin-top:12px;">
